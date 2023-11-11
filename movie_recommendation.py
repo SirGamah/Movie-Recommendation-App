@@ -10,7 +10,6 @@ import seaborn as sns
 import plotly.express as px
 from plotly import graph_objs as go
 
-import re
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
@@ -49,11 +48,9 @@ def get_data():
     for val in page_val:
         next_url = f'https://www.imdb.com/search/title/?groups=top_1000&sort=user_rating,desc&count=100&start={val}&ref_=adv_nxt'
         
-        # You don't need a loop here, you should directly use the next_url
         next_response = requests.get(next_url)
         next_soup = BeautifulSoup(next_response.content, 'html.parser')
         
-        # Now you can process the content of the page
         m_data = next_soup.findAll('div', attrs = {'class': 'lister-item mode-advanced'})
             
         for m in m_data:
@@ -81,14 +78,11 @@ def get_data():
 
 #-----------Web page setting-------------------#
 page_title = "Movie Recommendation App"
-page_icon = ":robot"
-#approve_icon = ":check_mark_button:"
-#not_approve_icon = ":prohibited:"
+page_icon = "🎥"
 layout = "centered"
 
 #--------------------Page configuration------------------#
 st.set_page_config(page_title = page_title, page_icon = page_icon, layout = layout)
-
 
 # Set up Menu/Navigation Bar
 selected = option_menu(
@@ -102,10 +96,10 @@ selected = option_menu(
 # Set `Home` page
 if selected == "Home":
     st.title("Welcome!")
-    st.write("MovieRecommender is a web app that uses NLP algorithm to recommend similar movies to watch based on the movie description (synopsis).")
+    st.write("MovieRecommender is a web app that uses NLP algorithm to recommend similar movies to watch based on the movie description.")
     st.markdown("""The data is scraped from [IMDb Top 1000 (Sorted by User rating Ascending)](https://www.imdb.com/search/title/?count=100&groups=top_1000&sort=user_rating).""") 
     st.write("This is then processed, analyzed and used to train a TFIDF model and the Gensim's Similarities packege is used to compute the similarity index.")
-    st.write("Users can explore the data as well as imput their favourite movie to see which ones have similar synopsis to the selected one.")
+    st.write("Users can use explore the data as well as imput their favourite movie to see which ones have similar snopsis to the selected one.")
     
 
 # Set `Explore` page
@@ -133,49 +127,24 @@ if selected == "Explore":
     if chart == "Most Rated Movies by Year":
         trend = data.groupby('Year')['Title'].count()
 
-        fig2 = go.Figure()
+        fig2 = plt.figure()
+        sns.lineplot(x=trend.index, y=trend.values, data=trend, ci=None)
+        plt.title('Trend of Ratings Over the Years')
+        plt.xlabel('Year')
+        plt.ylabel('Count of Movies')
+        st.pyplot(fig2)
 
-        fig2.add_trace(go.Scatter(
-            x=trend.index,
-            y=trend.values,
-            mode='lines',
-            name='Movie Count'
-        ))
 
-        fig2.update_layout(
-            title='Count of Most Rated Movies Over the Years',
-            xaxis_title='Year',
-            yaxis_title='Number of Titles',
-            showlegend=True
-        )
-
-        # Display the Plotly figure in Streamlit
-        st.plotly_chart(fig2)
     if chart == "To 10 Rated Movies of all Time":
         mask = data[['Title', 'Rating']].head(10)
 
-        fig3 = go.Figure()
-        
-        # Define different colors for each bar
-        bar_colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'cyan', 'magenta']
+        fig3 = plt.figure()
+        sns.barplot(x='Rating', y='Title', data=mask)
+        plt.title('Top 10 Most Rated Movies')
+        plt.xlabel('Rating')
+        plt.ylabel('Movie Title')
+        st.pyplot(fig3)
 
-        fig3.add_trace(go.Bar(
-            x=mask['Rating'],
-            y=mask['Title'],
-            orientation='h',
-            marker=dict(color=bar_colors),
-            name='Top 10 Most Rated Movies'
-        ))
-
-        fig3.update_layout(
-            title='Top 10 Most Rated Movies of All Time',
-            xaxis_title='Rating',
-            yaxis_title='Movie Title',
-            #showlegend=True
-        )
-
-        # Display the Plotly figure in Streamlit
-        st.plotly_chart(fig3)
 
 # Set `Recommendation` page
 if selected == 'Get Recommendation':
@@ -222,7 +191,6 @@ if selected == 'Get Recommendation':
     sim_df.columns = data['Title']
     sim_df.index = data['Title']
 
-
     top_movies = data[['Title', 'Rating']].sort_values(by='Rating', ascending=False)
 
     col_name = st.selectbox("Select Movie Title", (top_movies['Title'].values.tolist()))
@@ -233,17 +201,16 @@ if selected == 'Get Recommendation':
 
         # Sort by ascending scores
         v = v.sort_values(ascending=True)
-        fig = px.bar(
-            v, 
-            x=v.values, 
-            y=v.index, 
-            orientation='h',  # Horizontal orientation
-            labels={'x': 'Similarity Index', 'y': 'Movie Title'},
-            title=f"Top 10 Most Similar Movies to '{col_name}'"
-        )
 
-        # Display the Plotly figure in Streamlit
-        st.plotly_chart(fig)
+        fig = plt.figure()
+        sns.barplot(x=v.values, y=v.index)  
+
+        # Set labels and title
+        plt.xlabel('Similarity Index')
+        plt.ylabel('Movie Title')
+        plt.title(f"Top 10 Most Similar Movies to '{col_name}'")
+
+        st.pyplot(fig)
 
 # Set `Contact` page
 if selected == "Contact":
@@ -254,4 +221,3 @@ if selected == "Contact":
     st.markdown("""GitHub: [Link](https://github.com/SirGamah/).""")
 
     st.markdown("""WhatsApp: [Link](https://wa.me/233542124371).""")
-    
