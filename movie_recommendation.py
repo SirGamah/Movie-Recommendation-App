@@ -10,13 +10,17 @@ import seaborn as sns
 import plotly.express as px
 from plotly import graph_objs as go
 
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import SnowballStemmer
-from gensim import corpora
-from gensim.models import TfidfModel
-from gensim.corpora import Dictionary
-from gensim import similarities
+#import nltk
+#from nltk.corpus import stopwords
+#from nltk.stem import SnowballStemmer
+#from gensim import corpora
+#from gensim.models import TfidfModel
+#from gensim.corpora import Dictionary
+#from gensim import similarities
+import spacy
+from spacy.lang.en.examples import sentences
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 import warnings
 
