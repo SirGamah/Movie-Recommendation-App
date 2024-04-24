@@ -91,7 +91,7 @@ if selected == "Explore":
 
 
     if chart == "To 10 Rated Movies of all Time":
-        mask = data[['Title', 'Rating']].head(10)
+        mask = data[['TITLE', 'RATING']].head(10)
 
         fig3 = plt.figure()
         sns.barplot(x='RATING', y='TITLE', data=mask)
