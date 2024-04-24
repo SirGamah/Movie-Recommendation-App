@@ -54,7 +54,7 @@ if selected == "Home":
     st.title("Welcome!")
     st.write("MovieRecommender is a web app that uses NLP algorithm to recommend similar movies to watch based on the movie synopsis.")
     st.markdown("""The data is scraped from [IMDb Top 1000 (Sorted by User rating Descending)](https://www.imdb.com/search/title/?count=100&groups=top_1000&sort=user_rating).""") 
-    st.write("This is then processed using spaCy model, analyzed and used to train a TFIDF model and the Gensim's Similarities packege is used to compute the similarity index.")
+    st.write("This is then processed, analyzed and used to train a TFIDF model and the Gensim's Similarities packege is used to compute the similarity index.")
     st.write("Users can explore the data as well as imput their favourite movie to see which ones have similar synopsis to the selected one.")
 
 
