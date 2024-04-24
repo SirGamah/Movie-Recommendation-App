@@ -2,6 +2,9 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
@@ -15,8 +18,6 @@ from gensim import corpora
 from gensim.models import TfidfModel
 from gensim.corpora import Dictionary
 from gensim import similarities
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 import warnings
 
@@ -27,13 +28,17 @@ def get_data():
     df = pd.read_csv("IMDB_TOP_1000_RATED_DESCENDING.csv", encoding='latin1')
     return df
 
+
 #-----------Web page setting-------------------#
 page_title = "Movie Recommendation App"
-page_icon = "🎥"
+page_icon = ":robot"
+#approve_icon = ":check_mark_button:"
+#not_approve_icon = ":prohibited:"
 layout = "centered"
 
 #--------------------Page configuration------------------#
 st.set_page_config(page_title = page_title, page_icon = page_icon, layout = layout)
+
 
 # Set up Menu/Navigation Bar
 selected = option_menu(
@@ -51,7 +56,7 @@ if selected == "Home":
     st.markdown("""The data is scraped from [IMDb Top 1000 (Sorted by User rating Descending)](https://www.imdb.com/search/title/?count=100&groups=top_1000&sort=user_rating).""") 
     st.write("This is then processed using spaCy model, analyzed and used to train a TFIDF model and the Gensim's Similarities packege is used to compute the similarity index.")
     st.write("Users can explore the data as well as imput their favourite movie to see which ones have similar synopsis to the selected one.")
-    
+
 
 # Set `Explore` page
 if selected == "Explore":
@@ -96,27 +101,18 @@ if selected == "Explore":
         plt.ylabel('Movie Title')
         st.pyplot(fig3)
 
-
 # Set `Recommendation` page
 if selected == 'Get Recommendation':
     data = get_data()
-    
     # Load NLTK stopwords from the saved file
     with open('stopwords.txt', 'r') as f:
         stop_words = set(f.read().splitlines())
-
-    # Define function for text pre-processing
-    def preprocess_text(text):
-        doc = nlp(text)
-        # Lemmatize tokens and remove stop words
-        tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
-        return ' '.join(tokens)
-
+    
     # Transform the text into tokens 
-    data['Synopsis_processed'] = data['SYNOPSIS'].apply(preprocess_text)
+    data['Synopsis_processed'] = data['SYNOPSIS'].str.split()
 
     # Remove stop words
-    data['Synopsis_processed'] = data['Synopsis_processed'].apply(lambda x: [word for word in x if word not in stop_words])
+    data['Synopsis_processed']= data['Synopsis_processed'].apply(lambda x: [word for word in x if word not in stop_words])
 
     # Create stemmer object
     snowball_stemmer = SnowballStemmer('english')
@@ -137,39 +133,41 @@ if selected == 'Get Recommendation':
     # BoW representation
     corpus_bow = [word_dict.doc2bow(text) for text in tokenized_texts]
 
-    #===================================================#
+    # Create TFIDF model
+    tfidf_model = TfidfModel(corpus_bow)
 
-    # Create TF-IDF vectorizer
-    tfidf_vectorizer = TfidfVectorizer()
+    # Compute the similarity matrix (pairwise distance between all texts)
+    sims = similarities.MatrixSimilarity(tfidf_model[corpus_bow])
 
-    # Fit and transform the data
-    tfidf_matrix = tfidf_vectorizer.fit_transform(corpus_bow)
+    # Transform the resulting list into a dataframe
+    sim_df = pd.DataFrame(list(sims))
 
-    # Compute similarity matrix
-    similarity_matrix = cosine_similarity(tfidf_matrix, tfidf_matrix)
+    # Add the titles of the books as columns and index of the dataframe
+    sim_df.columns = data['TITLE']
+    sim_df.index = data['TITLE']
 
-    # Transform the resulting list into a DataFrame
-    sim_df = pd.DataFrame(similarity_matrix, index=data['TITLE'], columns=data['TITLE'])
-    
 
-    col_name = st.selectbox("Select Movie Title", (data['TITLE'].values.tolist()))
+    top_movies = data[['TITLE', 'RATING']].sort_values(by='RATING', ascending=False)
+
+    col_name = st.selectbox("Select Movie Title", (top_movies['TITLE'].values.tolist()))
 
     if col_name:
-        # Get the most similar movies based on the selected movie
-        similar_movies = sim_df[col_name].sort_values(ascending=False).iloc[1:11]
+        # Get the most similar books based on the selected book
+        v = sim_df[col_name].sort_values(ascending=False).iloc[1:].head(10)
 
         # Sort by ascending scores
-        similar_movies = similar_movies.sort_values(ascending=True)
+        v = v.sort_values(ascending=True)
+        fig = px.bar(
+            v, 
+            x=v.values, 
+            y=v.index, 
+            orientation='h',  # Horizontal orientation
+            labels={'x': 'Similarity Index', 'y': 'Movie Title'},
+            title=f"Top 10 Most Similar Movies to '{col_name}'"
+        )
 
-        fig = plt.figure()
-        sns.barplot(x=similar_movies.values, y=similar_movies.index)  
-
-        # Set labels and title
-        plt.xlabel('Similarity Index')
-        plt.ylabel('Movie Title')
-        plt.title(f"Top 10 Most Similar Movies to '{col_name}'")
-
-        st.pyplot(fig)
+        # Display the Plotly figure in Streamlit
+        st.plotly_chart(fig)
 
 # Set `Contact` page
 if selected == "Contact":
@@ -180,3 +178,4 @@ if selected == "Contact":
     st.markdown("""GitHub: [Link](https://github.com/SirGamah/).""")
 
     st.markdown("""WhatsApp: [Link](https://wa.me/233542124371).""")
+    
