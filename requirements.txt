@@ -10,3 +10,4 @@ nltk==3.7
 snowballstemmer==2.2.0
 gensim==4.1.2
 spacy==3.7.4
+scikit-learn==1.0.2
