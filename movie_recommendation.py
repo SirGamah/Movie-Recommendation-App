@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore")
 
 @st.cache_data
 def get_data():
-    df = pd.read_csv("IMDB_TOP_1000_RATED_DESCENDING.csv")
+    df = pd.read_csv("IMDB_TOP_1000_RATED_DESCENDING.csv", encoding='latin1')
     return df
 
 #-----------Web page setting-------------------#
