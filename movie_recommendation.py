@@ -7,8 +7,14 @@ import seaborn as sns
 import plotly.express as px
 from plotly import graph_objs as go
 
-import spacy
-from spacy.lang.en.examples import sentences
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
+from gensim import corpora
+from gensim.models import TfidfModel
+from gensim.corpora import Dictionary
+from gensim import similarities
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -95,9 +101,9 @@ if selected == "Explore":
 if selected == 'Get Recommendation':
     data = get_data()
     
-    # Load spaCy model
-    #spacy.cli.download('en_core_web_sm')
-    nlp = spacy.load("en_core_web_sm")
+    # Load NLTK stopwords from the saved file
+    with open('stopwords.txt', 'r') as f:
+        stop_words = set(f.read().splitlines())
 
     # Define function for text pre-processing
     def preprocess_text(text):
@@ -106,14 +112,38 @@ if selected == 'Get Recommendation':
         tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
         return ' '.join(tokens)
 
-    # Apply pre-processing to synopsis column
+    # Transform the text into tokens 
     data['Synopsis_processed'] = data['SYNOPSIS'].apply(preprocess_text)
+
+    # Remove stop words
+    data['Synopsis_processed'] = data['Synopsis_processed'].apply(lambda x: [word for word in x if word not in stop_words])
+
+    # Create stemmer object
+    snowball_stemmer = SnowballStemmer('english')
+
+    # Define stemming function
+    def apply_stemming(tokens):
+        return [snowball_stemmer.stem(token) for token in tokens]
+    
+    # Apply stemming function
+    data['Synopsis_processed'] = data['Synopsis_processed'].apply(apply_stemming)
+
+    # Get list of tokenized texts
+    tokenized_texts = data['Synopsis_processed'].tolist()
+
+    # Map words to ids
+    word_dict = Dictionary(tokenized_texts)
+
+    # BoW representation
+    corpus_bow = [word_dict.doc2bow(text) for text in tokenized_texts]
+
+    #===================================================#
 
     # Create TF-IDF vectorizer
     tfidf_vectorizer = TfidfVectorizer()
 
     # Fit and transform the data
-    tfidf_matrix = tfidf_vectorizer.fit_transform(data['Synopsis_processed'])
+    tfidf_matrix = tfidf_vectorizer.fit_transform(corpus_bow)
 
     # Compute similarity matrix
     similarity_matrix = cosine_similarity(tfidf_matrix, tfidf_matrix)
