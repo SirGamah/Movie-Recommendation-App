@@ -2,21 +2,11 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 
 import pandas as pd
-import requests
-from bs4 import BeautifulSoup
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 from plotly import graph_objs as go
 
-#import nltk
-#from nltk.corpus import stopwords
-#from nltk.stem import SnowballStemmer
-#from gensim import corpora
-#from gensim.models import TfidfModel
-#from gensim.corpora import Dictionary
-#from gensim import similarities
 import spacy
 from spacy.lang.en.examples import sentences
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -52,9 +42,9 @@ selected = option_menu(
 if selected == "Home":
     st.title("Welcome!")
     st.write("MovieRecommender is a web app that uses NLP algorithm to recommend similar movies to watch based on the movie synopsis.")
-    st.markdown("""The data is scraped from [IMDb Top 1000 (Sorted by User rating Ascending)](https://www.imdb.com/search/title/?count=100&groups=top_1000&sort=user_rating).""") 
+    st.markdown("""The data is scraped from [IMDb Top 1000 (Sorted by User rating Descending)](https://www.imdb.com/search/title/?count=100&groups=top_1000&sort=user_rating).""") 
     st.write("This is then processed using spaCy model, analyzed and used to train a TFIDF model and the Gensim's Similarities packege is used to compute the similarity index.")
-    st.write("Users can use explore the data as well as imput their favourite movie to see which ones have similar synopsis to the selected one.")
+    st.write("Users can explore the data as well as imput their favourite movie to see which ones have similar synopsis to the selected one.")
     
 
 # Set `Explore` page
