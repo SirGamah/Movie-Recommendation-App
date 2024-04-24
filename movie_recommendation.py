@@ -106,6 +106,7 @@ if selected == 'Get Recommendation':
     data = get_data()
     
     # Load spaCy model
+    spacy.cli.download('en_core_web_sm')
     nlp = spacy.load("en_core_web_sm")
 
     # Define function for text pre-processing
